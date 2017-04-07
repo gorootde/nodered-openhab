@@ -1,3 +1,6 @@
+var request = require('request');
+
+
 module.exports = function(RED) {
 
     //*************** Input Node ***************
@@ -47,40 +50,50 @@ module.exports = function(RED) {
     //*************** State Output Node ***************
     function OpenhabOut(config) {
         RED.nodes.createNode(this, config);
+        this.itemname=config.itemname;
         this.server = RED.nodes.getNode(config.server);
         var node = this;
         this.type = config.type;
-        // this.on('input', function(msg) {
-        //     var options = {
-        //         url: url,
-        //         method: "POST",
-        //         json: msg.payload
-        //     };
-        //     var url = server.getUrl() + "items/" + msg.topic;
-        //     if (type === "state") {
-        //         url += "/state";
-        //         options.method = 'PUT';
-        //     }
-        //
-        //
-        //     request(options, function(error, response, body) {
-        //         if (error) {
-        //             console.log(error);
-        //             node.status({
-        //                 fill: "green",
-        //                 shape: "dot",
-        //                 text: "Sent!"
-        //             });
-        //         } else {
-        //             console.log(body);
-        //             node.status({
-        //                 fill: "red",
-        //                 shape: "dot",
-        //                 text: "Error!"
-        //             });
-        //         }
-        //     });
-        // });
+
+        RED.httpAdmin.get("/openhab-output/itemlist", RED.auth.needsPermission('ohoutput.read'), function(req, res) {
+            node.server.getItemsList(function(items) {
+                res.json(items);
+            });
+        });
+
+
+        this.on('input', function(msg) {
+            var options = {
+                url: url,
+                method: "POST",
+                json: msg.payload
+            };
+            var itemname = node.itemname || msg.topic;
+            var url = server.getUrl() + "items/" + itemname;
+            if (type === "state") {
+                url += "/state";
+                options.method = 'PUT';
+            }
+
+
+            request(options, function(error, response, body) {
+                if (error) {
+                    console.log(error);
+                    node.status({
+                        fill: "green",
+                        shape: "dot",
+                        text: "Sent!"
+                    });
+                } else {
+                    console.log(body);
+                    node.status({
+                        fill: "red",
+                        shape: "dot",
+                        text: "Error!"
+                    });
+                }
+            });
+        });
     }
     RED.nodes.registerType("openhab-output", OpenhabOut);
 
@@ -100,15 +113,32 @@ module.exports = function(RED) {
             return node.getUrl() + "events";
         };
 
-        this.getItemsList = function() {
+        this.getItemsList = function(callback) {
             var options = {
-                url: node.url,
+                url: node.url + "items",
                 method: 'GET',
-                json: true
+                json: true,
+                rejectUnauthorized: false,
             }
             request(options, function(error, response, body) {
-                if (error) console.log(error);
-                else console.log(body);
+
+                if (error) {
+                    console.log(error);
+                    callback(null);
+                } else {
+                    callback(body.sort(function(a, b) {
+                        var nameA = a.name.toLowerCase(),
+                            nameB = b.name.toLowerCase();
+                        if (nameA < nameB) //sort string ascending
+                            return -1;
+                        if (nameA > nameB)
+                            return 1;
+                        return 0; //default return value (no sorting)
+                    }));
+
+                }
+
+
             });
         }
     }

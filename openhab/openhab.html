@@ -2,7 +2,7 @@
 <script type="text/javascript">
     RED.nodes.registerType('openhab-input', {
         category: 'openhab',
-        color: '#a6bbcf',
+        color: '#F3B567',
         defaults: {
             name: {
                 value: ""
@@ -14,19 +14,14 @@
         },
         inputs: 0,
         outputs: 1,
-        icon: "bridge.png",
+        outputLabels: ["event"],
+        icon: "light.png",
         label: function() {
             return this.name || "openhab-input";
-        },
-        oneditprepare: function() {
-            console.log(this);
-            console.log($("#node-input-server"));
-            var selectedServernodeId = $("#node-input-server").val();
-            console.log(selectedServernodeId);
-            var servernode = RED.nodes.getNode(selectedServernodeId);
-            console.log("SERVERNODE:", servernode);
         }
+
     });
+
 </script>
 
 <script type="text/x-red" data-template-name="openhab-input">
@@ -38,6 +33,7 @@
         <label for="node-input-name"><i class="icon-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
+
 </script>
 
 <script type="text/x-red" data-help-name="openhab-input">
@@ -49,7 +45,8 @@
 <script type="text/javascript">
     RED.nodes.registerType('openhab-output', {
         category: 'openhab',
-        color: '#a6bbcf',
+        color: '#F3B567',
+        align: 'right',
         defaults: {
             name: {
                 value: ""
@@ -63,11 +60,26 @@
                 required: true
             },
         },
+        inputLabels: "event",
         inputs: 1,
         outputs: 0,
-        icon: "bridge.png",
+        icon: "light.png",
         label: function() {
             return this.name || "openhab-output";
+        },
+        oneditprepare: function() {
+          $.getJSON("openhab-output/itemlist",function(data){
+            var htmlelement=$('#node-input-itemname');
+            htmlelement.html('');
+
+            htmlelement.append("<optgroup label=\"Nodered\"><option>Use msg.topic</option></optgroup>");
+            htmlelement.append("<optgroup label=\"Openhab Items\" id=\"node-input-itemname-optgroup\"></optgroup>");
+            $.each(data,function(index,value){
+
+              $('#node-input-itemname-optgroup').append("<option value=\""+value.name+"\">"+value.name+":"+value.type+" ("+value.label+")</option>");
+            });
+
+          });
         }
     });
 </script>
@@ -84,8 +96,13 @@
     <div class="form-row">
         <label for="node-input-typ"><i class="icon-tag"></i> Type</label>
         <select id="node-input-typ">
-          <option value="state" selected="selected">State</option>
+          <option value="state" selected>State</option>
           <option value="command">Command</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-itemname"><i class="icon-tag"></i> Item Name</label>
+        <select id="node-input-itemname">
         </select>
     </div>
 </script>
