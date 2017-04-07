@@ -12,7 +12,7 @@
         "url": "https://github.com/kwave/"
     },
     "scripts": {
-        "debug": "nodemon -w openhab  --exec 'node-red -v'"
+        "debug": "nodemon -w openhab -e html,js  --exec 'node-red -v'"
     },
     "keywords": [],
     "node-red": {

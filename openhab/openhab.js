@@ -6,6 +6,7 @@ module.exports = function(RED) {
         var node = this;
         this.server = RED.nodes.getNode(config.server);
 
+
         var EventSource = require("eventsource");
         var eventSourceInitDict = {
             rejectUnauthorized: false
@@ -21,7 +22,13 @@ module.exports = function(RED) {
         });
 
         es.onmessage = function(msg) {
-            node.send(JSON.parse(msg.data));
+            var event = JSON.parse(msg.data);
+
+            var message = {
+                raw: event,
+
+            };
+            node.send(event);
         }
         es.onerror = function(err) {
             node.status({
@@ -38,12 +45,44 @@ module.exports = function(RED) {
 
 
     //*************** State Output Node ***************
-    /*function OpenhabStateOut(config) {
+    function OpenhabOut(config) {
         RED.nodes.createNode(this, config);
-
+        this.server = RED.nodes.getNode(config.server);
+        var node = this;
+        this.type = config.type;
+        // this.on('input', function(msg) {
+        //     var options = {
+        //         url: url,
+        //         method: "POST",
+        //         json: msg.payload
+        //     };
+        //     var url = server.getUrl() + "items/" + msg.topic;
+        //     if (type === "state") {
+        //         url += "/state";
+        //         options.method = 'PUT';
+        //     }
+        //
+        //
+        //     request(options, function(error, response, body) {
+        //         if (error) {
+        //             console.log(error);
+        //             node.status({
+        //                 fill: "green",
+        //                 shape: "dot",
+        //                 text: "Sent!"
+        //             });
+        //         } else {
+        //             console.log(body);
+        //             node.status({
+        //                 fill: "red",
+        //                 shape: "dot",
+        //                 text: "Error!"
+        //             });
+        //         }
+        //     });
+        // });
     }
-    RED.nodes.registerType("openhab-output-state", OpenhabStateOut);
-*/
+    RED.nodes.registerType("openhab-output", OpenhabOut);
 
     //*************** Server Node ***************
     function OpenhabServerNode(n) {

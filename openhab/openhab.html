@@ -1,7 +1,7 @@
 <!-- *************** Input Node *************** -->
 <script type="text/javascript">
     RED.nodes.registerType('openhab-input', {
-        category: 'input',
+        category: 'openhab',
         color: '#a6bbcf',
         defaults: {
             name: {
@@ -19,19 +19,13 @@
             return this.name || "openhab-input";
         },
         oneditprepare: function() {
-            alert('foo');
-            //     $("#node-input-server").change(function() {
-            //         var selectedServernodeId = $(this).val();
-            //         var servernode = RED.nodes.get(selectedServernodeId);
-            //         alert(servernode);
-            //         /*
-            //             $.getJSON('http://query.yahooapis.com/v1/public/yql?q=select%20%2a%20from%20yahoo.finance.quotes%20WHERE%20symbol%3D%27WRC%27&format=json&diagnostics=true&env=store://datatables.org/alltableswithkeys&callback', function(data) {
-            //   //data is the JSON string
-            // });
-            // */
-        //});
-
-    }
+            console.log(this);
+            console.log($("#node-input-server"));
+            var selectedServernodeId = $("#node-input-server").val();
+            console.log(selectedServernodeId);
+            var servernode = RED.nodes.getNode(selectedServernodeId);
+            console.log("SERVERNODE:", servernode);
+        }
     });
 </script>
 
@@ -51,40 +45,55 @@
 </script>
 
 
-<!-- *************** Output State Node *************** -->
-<!--
+<!-- *************** Output Node *************** -->
 <script type="text/javascript">
-    RED.nodes.registerType('openhab-output-state',{
-        category: 'output',
+    RED.nodes.registerType('openhab-output', {
+        category: 'openhab',
         color: '#a6bbcf',
         defaults: {
-            name: {value:""},
-            server: {type:"openhab-server", required:true},
+            name: {
+                value: ""
+            },
+            server: {
+                type: "openhab-server",
+                required: true
+            },
+            typ: {
+                value: "",
+                required: true
+            },
         },
-        inputs:1,
-        outputs:0,
+        inputs: 1,
+        outputs: 0,
         icon: "bridge.png",
         label: function() {
-            return this.name||"openhab-output-state";
+            return this.name || "openhab-output";
         }
     });
 </script>
 
-<script type="text/x-red" data-template-name="openhab-output-state">
-<div class="form-row">
-    <label for="node-input-server"><i class="icon-tag"></i> Server</label>
-    <input type="text" id="node-input-server">
-</div>
-<div class="form-row">
+<script type="text/x-red" data-template-name="openhab-output">
+    <div class="form-row">
+        <label for="node-input-server"><i class="icon-tag"></i> Server</label>
+        <input type="text" id="node-input-server">
+    </div>
+    <div class="form-row">
         <label for="node-input-name"><i class="icon-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
+    <div class="form-row">
+        <label for="node-input-typ"><i class="icon-tag"></i> Type</label>
+        <select id="node-input-typ">
+          <option value="state" selected="selected">State</option>
+          <option value="command">Command</option>
+        </select>
+    </div>
 </script>
 
-<script type="text/x-red" data-help-name="openhab-input">
-    <p>A node that listens for state changes on openha bitems</p>
+<script type="text/x-red" data-help-name="openhab-output">
+    <p>A node that publishes a state/command to an item</p>
 </script>
--->
+
 
 
 
@@ -96,7 +105,7 @@
             url: {
                 value: null,
                 required: true,
-                validate: RED.validators.regex("https?://.+/rest/")
+                validate: RED.validators.regex(/https?:\/\/.+\/rest\//)
             },
             name: {
                 value: null,
