@@ -69,8 +69,7 @@
     <b>Configuration</b><br>
     <ul>
         <li><b>Name:</b> Choose any name to identify your node.</li>
-        <li><b>Server-Name:</b> Choose any name to identify your server.</li>
-        <li><b>Server-URL:</b> The URL to the REST-API of your openhab instance. Make sure to include the trailing slash in your URL. Example: <code>http://localhost:8080/rest/</code></li>
+        <li><b>Server:</b> Choose the openhab server instance to use.</li>
         <li><b>Simple Item:</b> If checked, the topic contains the simple item name <code>Daylight</code> instead of the fully item path <code>smarthome/items/Daylight/state</code>.</li>
     </ul>
     <b>Output</b><br>
@@ -105,8 +104,8 @@
                 required: true
             },
             itemname: {
-              value: "",
-              required: true
+                value: "",
+                required: true
             }
         },
         inputLabels: "event",
@@ -162,9 +161,8 @@
 
     <b>Configuration</b><br>
     <ul>
-        <li><b>Server-Name:</b> Choose any name to identify your server.</li>
-        <li><b>Server-URL:</b> The URL to the REST-API of your openhab instance. Make sure to include the trailing slash in your URL. Example: <code>http://localhost:8080/rest/</code></li>
         <li><b>Name:</b> Choose any name to identify your node.</li>
+        <li><b>Server:</b> Choose the openhab server instance to use.</li>
         <li><b>Type:</b> Choose whether the node should set the <code>state</code> of the choosen item, or send a <code>command</code> to it.</li>
         <li><b>Item:</b> Select the name of the item to send your command / state to. If you choose <code>Use msg.topic</code> the topic of the input message will be used as item name. The list of openhab items is retrieved via a rest call. It refreshes every
             time you open up the configuration menu.</li>
@@ -184,19 +182,19 @@
     RED.nodes.registerType('openhab-server', {
         category: 'config',
         defaults: {
-          name: {
-              value: null,
-              required: false
-          },
-          url: {
+            name: {
+                value: null,
+                required: false
+            },
+            url: {
                 value: null,
                 required: true,
                 validate: RED.validators.regex(/https?:\/\/.+\/rest\//)
-          },
-          allowuntrusted:{
-            value:false,
-            required:true
-          }
+            },
+            allowuntrusted: {
+                value: false,
+                required: true
+            }
 
         },
         label: function() {
@@ -218,6 +216,13 @@
         <label for="node-config-input-allowuntrusted"><i class="icon-tag"></i> SSL</label>
         <input type="checkbox" id="node-config-input-allowuntrusted" style="display: inline-block; width: auto; vertical-align: top;"> Do not validate SSL Server Certificate</input>
     </div>
+</script>
 
-
+<script type="text/x-red" data-help-name="openhab-server">
+    <b>Configuration</b><br>
+    <ul>
+        <li><b>Name:</b> Choose any name to identify your server.</li>
+        <li><b>URL:</b> The URL to the REST-API of your openhab instance. Make sure to include the trailing slash in your URL. Example: <code>http://localhost:8080/rest/</code></li>
+        <li><b>SSL:</b> Activate to disable SSL Certificate validation. e.g. for using a self signed certificate</li>
+    </ul>
 </script>
