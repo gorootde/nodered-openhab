@@ -26,14 +26,11 @@ module.exports = function(RED) {
         this.server = RED.nodes.getNode(config.server);
         var usesimpleitem = config.simpleitem;
 
-        var EventSource = require("eventsource");
-        var eventSourceInitDict = {
-            rejectUnauthorized: false
-        };
 
-        var url = this.server.getEventsourceUrl();
-        console.log("Connecting to URL " + url)
-        var es = new EventSource(url, eventSourceInitDict);
+
+        var es = node.server.connectToEventSource()
+
+
         node.status({
             fill: "green",
             shape: "dot",
@@ -56,8 +53,7 @@ module.exports = function(RED) {
                 shape: "dot",
                 text: "Error"
             });
-            console.log("ERROR!");
-            console.log(err);
+            node.error(err);
         }
 
     }
@@ -67,7 +63,7 @@ module.exports = function(RED) {
     //*************** State Output Node ***************
     function OpenhabOut(config) {
         RED.nodes.createNode(this, config);
-        this.itemname = config.itemname;
+        this.itemname = config.itemname === "msg.topic" ? undefined : config.itemname;
         this.server = RED.nodes.getNode(config.server);
         var node = this;
         this.type = config.type;
@@ -81,46 +77,47 @@ module.exports = function(RED) {
 
         this.on('input', function(msg) {
             var itemname = node.itemname || msg.topic;
+            var url = "items/" + itemname;
             var options = {
-                rejectUnauthorized: false,
                 headers: {
-                  "Content-Type": "text/plain"
+                    "Content-Type": "text/plain"
                 },
-                uri: node.server.getUrl() + "items/" + itemname,
                 method: "POST",
                 body: msg.payload
             };
 
             if (node.type === "state") {
-                options.uri += "/state";
+                url += "/state";
                 options.method = 'PUT';
             }
-            console.log(options);
 
-            request(options, function(error, response, body) {
+            node.server.doRequest(url, options, function(error, response, body) {
                 if (error) {
-                  console.log(error);
-                  node.status({
-                      fill: "red",
-                      shape: "dot",
-                      text: "Error: "+error.status
-                  });
-                } else if(response.statusCode !== 200){
-                  console.log(response);
-                  node.status({
-                      fill: "red",
-                      shape: "dot",
-                      text: "Error: HTTP "+response.statusCode
-                  });
+                    node.error(error);
+                    node.status({
+                        fill: "red",
+                        shape: "dot",
+                        text: "Error: " + error.status
+                    });
+                } else if (response.statusCode !== 200) {
+                    node.error(response);
+                    node.status({
+                        fill: "red",
+                        shape: "dot",
+                        text: "Error: HTTP " + response.statusCode
+                    });
                 } else {
-                  console.log(body);
-                  node.status({
-                      fill: "green",
-                      shape: "dot",
-                      text: "Sent!"
-                  });
-
+                    node.log(body);
+                    node.status({
+                        fill: "green",
+                        shape: "dot",
+                        text: "Sent!"
+                    });
                 }
+                setTimeout(function(){
+                  node.status({});
+                },1000);
+
             });
         });
     }
@@ -132,27 +129,40 @@ module.exports = function(RED) {
         var node = this;
         this.url = n.url;
         this.name = n.name;
+        this.rejectUnauthorized = !n.allowuntrusted;
 
+        this.connectToEventSource = function() {
+            var EventSource = require("eventsource");
+            var eventSourceInitDict = {
+                rejectUnauthorized: node.rejectUnauthorized
+            };
+            var url = node.getUrl() + "events";
+            node.log("Connecting to URL " + url);
+            var es = new EventSource(url, eventSourceInitDict);
+            return es;
+        }
+
+        this.doRequest = function(urlpart, options, callback) {
+            options.rejectUnauthorized = node.rejectUnauthorized;
+            options.uri = node.url + urlpart;
+            node.log("Requesting URI "+options.uri+" with method "+options.method);
+            request(options, callback);
+        }
 
         this.getUrl = function() {
-            return this.url;
-        };
-
-        this.getEventsourceUrl = function() {
-            return node.getUrl() + "events";
+            return node.url;
         };
 
         this.getItemsList = function(callback) {
             var options = {
-                url: node.url + "items",
                 method: 'GET',
                 json: true,
                 rejectUnauthorized: false,
             }
-            request(options, function(error, response, body) {
+            node.doRequest("items", options, function(error, response, body) {
 
                 if (error) {
-                    console.log(error);
+                    node.error(error);
                     callback(null);
                 } else {
                     callback(body.sort(function(a, b) {

@@ -121,7 +121,7 @@
                 var htmlelement = $('#node-input-itemname');
                 htmlelement.html('');
 
-                htmlelement.append("<optgroup label=\"Nodered\"><option>Use msg.topic</option></optgroup>");
+                htmlelement.append("<optgroup label=\"Nodered\"><option value=\"msg.topic\">Use msg.topic</option></optgroup>");
                 htmlelement.append("<optgroup label=\"Openhab Items\" id=\"node-input-itemname-optgroup\"></optgroup>");
                 $.each(data, function(index, value) {
 
@@ -184,15 +184,20 @@
     RED.nodes.registerType('openhab-server', {
         category: 'config',
         defaults: {
-            url: {
+          name: {
+              value: null,
+              required: false
+          },
+          url: {
                 value: null,
                 required: true,
                 validate: RED.validators.regex(/https?:\/\/.+\/rest\//)
-            },
-            name: {
-                value: null,
-                required: false
-            }
+          },
+          allowuntrusted:{
+            value:false,
+            required:true
+          }
+
         },
         label: function() {
             return this.name ||  this.url;
@@ -208,6 +213,10 @@
     <div class="form-row">
         <label for="node-config-input-url"><i class="icon-bookmark"></i> URL</label>
         <input type="text" id="node-config-input-url">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-allowuntrusted"><i class="icon-tag"></i> SSL</label>
+        <input type="checkbox" id="node-config-input-allowuntrusted" style="display: inline-block; width: auto; vertical-align: top;"> Do not validate SSL Server Certificate</input>
     </div>
 
 
