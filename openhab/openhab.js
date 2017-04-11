@@ -43,10 +43,10 @@ module.exports = function(RED) {
         es.onmessage = function(msg) {
             var event = JSON.parse(msg.data);
 
-            if(usesimpleitem) {
-              var regex=/items\/(.+)\/(.+)/g;
-              var matches=regex.exec(event.topic);
-              event.topic=matches[1];
+            if (usesimpleitem) {
+                var regex = /items\/(.+)\/(.+)/g;
+                var matches = regex.exec(event.topic);
+                event.topic = matches[1];
             }
             node.send(event);
         }
@@ -67,7 +67,7 @@ module.exports = function(RED) {
     //*************** State Output Node ***************
     function OpenhabOut(config) {
         RED.nodes.createNode(this, config);
-        this.itemname=config.itemname;
+        this.itemname = config.itemname;
         this.server = RED.nodes.getNode(config.server);
         var node = this;
         this.type = config.type;
@@ -80,34 +80,46 @@ module.exports = function(RED) {
 
 
         this.on('input', function(msg) {
-            var options = {
-                url: url,
-                method: "POST",
-                json: msg.payload
-            };
             var itemname = node.itemname || msg.topic;
-            var url = server.getUrl() + "items/" + itemname;
-            if (type === "state") {
-                url += "/state";
+            var options = {
+                rejectUnauthorized: false,
+                headers: {
+                  "Content-Type": "text/plain"
+                },
+                uri: node.server.getUrl() + "items/" + itemname,
+                method: "POST",
+                body: msg.payload
+            };
+
+            if (node.type === "state") {
+                options.uri += "/state";
                 options.method = 'PUT';
             }
-
+            console.log(options);
 
             request(options, function(error, response, body) {
                 if (error) {
-                    console.log(error);
-                    node.status({
-                        fill: "green",
-                        shape: "dot",
-                        text: "Sent!"
-                    });
+                  console.log(error);
+                  node.status({
+                      fill: "red",
+                      shape: "dot",
+                      text: "Error: "+error.status
+                  });
+                } else if(response.statusCode !== 200){
+                  console.log(response);
+                  node.status({
+                      fill: "red",
+                      shape: "dot",
+                      text: "Error: HTTP "+response.statusCode
+                  });
                 } else {
-                    console.log(body);
-                    node.status({
-                        fill: "red",
-                        shape: "dot",
-                        text: "Error!"
-                    });
+                  console.log(body);
+                  node.status({
+                      fill: "green",
+                      shape: "dot",
+                      text: "Sent!"
+                  });
+
                 }
             });
         });
