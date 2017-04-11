@@ -21,7 +21,6 @@
         }
 
     });
-
 </script>
 
 <script type="text/x-red" data-template-name="openhab-input">
@@ -37,7 +36,24 @@
 </script>
 
 <script type="text/x-red" data-help-name="openhab-input">
-    <p>A node that listens for state changes on openhab items</p>
+    <p>This node listens for events (state changes / commands) sent to your openhab items.</p>
+
+    <b>Configuration</b><br>
+    <ul>
+        <li><b>Server-Name:</b> Choose any name to identify your server.</li>
+        <li><b>Server-URL:</b> The URL to the REST-API of your openhab instance. Make sure to include the trailing slash in your URL. Example: <code>http://localhost:8080/rest/</code></li>
+        <li><b>Name:</b> Choose any name to identify your node.</li>
+    </ul>
+    <b>Output</b><br>
+    <ul>
+        <li>The <code>msg.payload</code> of your message contains information about the change. e.g. <code>{"type":"OnOffType","value":"ON"}</code></li>
+        <li>The <code>msg.topic</code> contains the full item name (including the full item path) e.g. <code>smarthome/items/Daylight/state</code> for the item <code>Daylight</code>.</li>
+    </ul>
+    <b>Status</b><br>
+    <ul>
+        <li>The node indicates the connection status to openhab via a status indicator.</li>
+    </ul>
+
 </script>
 
 
@@ -68,18 +84,18 @@
             return this.name || "openhab-output";
         },
         oneditprepare: function() {
-          $.getJSON("openhab-output/itemlist",function(data){
-            var htmlelement=$('#node-input-itemname');
-            htmlelement.html('');
+            $.getJSON("openhab-output/itemlist", function(data) {
+                var htmlelement = $('#node-input-itemname');
+                htmlelement.html('');
 
-            htmlelement.append("<optgroup label=\"Nodered\"><option>Use msg.topic</option></optgroup>");
-            htmlelement.append("<optgroup label=\"Openhab Items\" id=\"node-input-itemname-optgroup\"></optgroup>");
-            $.each(data,function(index,value){
+                htmlelement.append("<optgroup label=\"Nodered\"><option>Use msg.topic</option></optgroup>");
+                htmlelement.append("<optgroup label=\"Openhab Items\" id=\"node-input-itemname-optgroup\"></optgroup>");
+                $.each(data, function(index, value) {
 
-              $('#node-input-itemname-optgroup').append("<option value=\""+value.name+"\">"+value.name+":"+value.type+" ("+value.label+")</option>");
+                    $('#node-input-itemname-optgroup').append("<option value=\"" + value.name + "\">" + value.name + ":" + value.type + " (" + value.label + ")</option>");
+                });
+
             });
-
-          });
         }
     });
 </script>
@@ -108,7 +124,22 @@
 </script>
 
 <script type="text/x-red" data-help-name="openhab-output">
-    <p>A node that publishes a state/command to an item</p>
+    <p>This node updates a state or sends a command to an item. The node uses the openhab REST-API to accomplish this.</p>
+
+    <b>Configuration</b><br>
+    <ul>
+        <li><b>Server-Name:</b> Choose any name to identify your server.</li>
+        <li><b>Server-URL:</b> The URL to the REST-API of your openhab instance. Make sure to include the trailing slash in your URL. Example: <code>http://localhost:8080/rest/</code></li>
+        <li><b>Name:</b> Choose any name to identify your node.</li>
+        <li><b>Type:</b> Choose whether the node should set the <code>state</code> of the choosen item, or send a <code>command</code> to it.</li>
+        <li><b>Item:</b> Select the name of the item to send your command / state to. If you choose <code>Use msg.topic</code> the topic of the input message will be used as item name. The list of openhab items is retrieved via a rest call. It refreshes every
+            time you open up the configuration menu.</li>
+    </ul>
+    <b>Input</b><br>
+    <ul>
+      <li>The <code>msg.payload</code> of your message is used as command / state.</li>
+      <li>The <code>msg.topic</code> is used as item name (if you selected the appropiate option in the item dropdown).</li>
+    </ul>
 </script>
 
 

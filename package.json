@@ -14,7 +14,7 @@
     "scripts": {
         "debug": "nodemon -w openhab -e html,js  --exec 'node-red -v'"
     },
-    "keywords": [],
+    "keywords": ["openhab"],
     "node-red": {
         "nodes": {
             "server": "openhab/openhab.js"
