@@ -24,7 +24,7 @@ module.exports = function(RED) {
         RED.nodes.createNode(this, config);
         var node = this;
         this.server = RED.nodes.getNode(config.server);
-
+        var usesimpleitem = config.simpleitem;
 
         var EventSource = require("eventsource");
         var eventSourceInitDict = {
@@ -43,10 +43,11 @@ module.exports = function(RED) {
         es.onmessage = function(msg) {
             var event = JSON.parse(msg.data);
 
-            var message = {
-                raw: event,
-
-            };
+            if(usesimpleitem) {
+              var regex=/items\/(.+)\/(.+)/g;
+              var matches=regex.exec(event.topic);
+              event.topic=matches[1];
+            }
             node.send(event);
         }
         es.onerror = function(err) {
