@@ -18,6 +18,14 @@ var request = require('request');
 
 
 module.exports = function(RED) {
+    RED.httpAdmin.get('/openhab/*', function(req, res) {
+        var options = {
+            root: __dirname + '/static/',
+            dotfiles: 'deny'
+        };
+        res.sendFile(req.params[0], options);
+    });
+
 
     //*************** Input Node ***************
     function OpenhabItemIn(config) {
@@ -25,8 +33,13 @@ module.exports = function(RED) {
         var node = this;
         this.server = RED.nodes.getNode(config.server);
         var usesimpleitem = config.simpleitem;
-
-
+        var filter = config.filter;
+        console.log("FILTER: ", filter);
+        RED.httpAdmin.get("/openhab-input/itemlist", RED.auth.needsPermission('ohinput.read'), function(req, res) {
+            node.server.getItemsList(function(items) {
+                res.json(items);
+            });
+        });
 
         var es = node.server.connectToEventSource()
 
@@ -40,12 +53,23 @@ module.exports = function(RED) {
         es.onmessage = function(msg) {
             var event = JSON.parse(msg.data);
 
+            var regex = /items\/(.+)\/(.+)/g;
+            var matches = regex.exec(event.topic);
+            var simpleItemName=matches[1];
             if (usesimpleitem) {
-                var regex = /items\/(.+)\/(.+)/g;
-                var matches = regex.exec(event.topic);
-                event.topic = matches[1];
+                event.topic = simpleItemName;
             }
-            node.send(event);
+
+            var doSend=true;
+            if(filter && filter.constructor === Array){
+              var isValid=filter.indexOf(simpleItemName) !== -1;
+              doSend=isValid;
+            }
+
+            if(doSend){
+              node.send(event);
+            }
+
         }
         es.onerror = function(err) {
             node.status({
@@ -114,9 +138,9 @@ module.exports = function(RED) {
                         text: "Sent!"
                     });
                 }
-                setTimeout(function(){
-                  node.status({});
-                },1000);
+                setTimeout(function() {
+                    node.status({});
+                }, 1000);
 
             });
         });
@@ -145,7 +169,7 @@ module.exports = function(RED) {
         this.doRequest = function(urlpart, options, callback) {
             options.rejectUnauthorized = node.rejectUnauthorized;
             options.uri = node.url + urlpart;
-            node.log("Requesting URI "+options.uri+" with method "+options.method);
+            node.log("Requesting URI " + options.uri + " with method " + options.method);
             request(options, callback);
         }
 

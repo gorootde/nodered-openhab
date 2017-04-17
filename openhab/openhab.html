@@ -20,6 +20,7 @@
 
 <!-- *************** Input Node *************** -->
 <script type="text/javascript">
+    $.getScript('openhab/bootstrap-multiselect/bootstrap-multiselect.js');
     RED.nodes.registerType('openhab-input', {
         category: 'openhab',
         color: '#F3B567',
@@ -34,6 +35,9 @@
                 type: "openhab-server",
                 required: true
             },
+            filter: {
+                value: null
+            }
         },
         inputs: 0,
         outputs: 1,
@@ -41,12 +45,47 @@
         icon: "light.png",
         label: function() {
             return this.name || "openhab-input";
+        },
+        oneditprepare: function() {
+            var filter=this.filter;
+            $.getJSON("openhab-input/itemlist", function(data) {
+                var htmlelement = $('#node-input-filter');
+                htmlelement.html('');
+                $.each(data, function(index, value) {
+                  var selected=$.inArray(value.name,filter) !== -1;
+                  htmlelement.append('<option value="' + value.name + '"'+(selected ? 'selected' : '')+'>' + value.name + '</option>');
+                });
+                htmlelement.multiselect({
+                    enableFiltering: true,
+                    enableCaseInsensitiveFiltering: true,
+                    nonSelectedText: "Disable item filtering"
+                });
+            });
+        },
+        oneditsave: function() {
+            var selectedOptions = $('#node-input-filter option:selected');
+            if (selectedOptions) {
+                this.filter = selectedOptions.map(function() {
+                    return $(this).val();
+                });
+            } else {
+              this.filter=null;
+            }
         }
-
     });
 </script>
 
 <script type="text/x-red" data-template-name="openhab-input">
+    <style type="text/css">
+        .multiselect-clear-filter {
+            display: none;
+        }
+
+        .multiselect-container input[type="checkbox"] {
+            display: none
+        }
+    </style>
+    <link rel="stylesheet" href="openhab/bootstrap-multiselect/bootstrap-multiselect.css" type="text/css" />
     <div class="form-row">
         <label for="node-input-name"><i class="icon-tag"></i> Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
@@ -59,7 +98,11 @@
         <label for="node-input-simpleitem"><i class="icon-tag"></i> Simple Item</label>
         <input type="checkbox" id="node-input-simpleitem" style="display: inline-block; width: auto; vertical-align: top;"> Use simple item name instead of full path</input>
     </div>
-
+    <div class="form-row">
+        <label for="node-input-filter"><i class="icon-tag"></i> Items</label>
+        <select id="node-input-filter" multiple>
+        </select>
+    </div>
 
 </script>
 
@@ -71,6 +114,7 @@
         <li><b>Name:</b> Choose any name to identify your node.</li>
         <li><b>Server:</b> Choose the openhab server instance to use.</li>
         <li><b>Simple Item:</b> If checked, the topic contains the simple item name <code>Daylight</code> instead of the fully item path <code>smarthome/items/Daylight/state</code>.</li>
+        <li><b>Items:</b> Select the items to listen to. If none is selected, the node will listen to all items.</li>
     </ul>
     <b>Output</b><br>
     <ul>
