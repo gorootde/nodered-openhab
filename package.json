@@ -4,7 +4,8 @@
   "description": "Openhab connectivity nodes for node-red",
   "dependencies": {
     "bootstrap-multiselect": "^0.9.13-1",
-    "eventsource": "^0.2.1"
+    "eventsource": "^0.2.1",
+    "request": "^2.81.0"
   },
   "license": "GPL-3.0",
   "author": {
